@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DoBiz Africa — Business Suite</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d1f17;
+    --surface: #122a1e;
+    --surface2: #193829;
+    --surface3: #1f4230;
+    --border: #234d35;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --green: #2ecc71;
+    --text: #e8f0eb;
+    --muted: #7a9e89;
+    --sidebar-w: 280px;
+  }
+
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+  /* Login Screen */
+  #login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0d1f17 0%, #1a3a2a 100%); position: relative; overflow: hidden; }
+  #login-screen::before { content: ''; position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(201,168,76,0.12) 0%, transparent 70%); top: -100px; right: -150px; border-radius: 50%; }
+  #login-screen::after { content: ''; position: absolute; width: 400px; height: 400px; background: radial-gradient(circle, rgba(46,204,113,0.08) 0%, transparent 70%); bottom: -50px; left: -100px; border-radius: 50%; }
+
+  .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 48px; width: 440px; max-width: 95vw; position: relative; z-index: 1; animation: fadeUp 0.6s ease both; backdrop-filter: blur(10px); }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+  .login-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 36px; justify-content: center; }
+  .logo-mark { width: 44px; height: 44px; background: linear-gradient(135deg, var(--gold), var(--gold-light)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; color: #0d1f17; }
+  .logo-text { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 20px; color: var(--text); }
+  .logo-text span { color: var(--gold); }
+  h1.login-title { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 700; margin-bottom: 8px; text-align: center; }
+  .login-sub { color: var(--muted); font-size: 14px; margin-bottom: 32px; text-align: center; }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
+  input[type="email"], input[type="password"] { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; color: var(--text); font-size: 15px; outline: none; margin-bottom: 20px; transition: border-color 0.2s; }
+  input:focus { border-color: var(--gold); }
+  .btn-login { width: 100%; background: linear-gradient(135deg, var(--gold), var(--gold-light)); color: #0d1f17; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; border: none; border-radius: 12px; padding: 14px; cursor: pointer; transition: all 0.2s; }
+  .btn-login:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-google { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); font-weight: 600; font-size: 14px; border-radius: 12px; padding: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 20px; transition: all 0.2s; }
+  .btn-google:hover { border-color: var(--gold); background: var(--surface2); }
+  .btn-google img { width: 18px; height: 18px; }
+  .auth-divider { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .auth-divider span { font-size: 12px; color: var(--muted); }
+  .forgot-link { display: block; text-align: right; font-size: 12px; color: var(--muted); margin-top: -14px; margin-bottom: 20px; cursor: pointer; }
+  .forgot-link:hover { color: var(--gold); }
+  .auth-tabs { display: flex; gap: 4px; background: var(--bg); border-radius: 12px; padding: 4px; margin-bottom: 28px; }
+  .auth-tab { flex: 1; padding: 9px; border: none; background: none; border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all 0.2s; }
+  .auth-tab.active { background: var(--surface); color: var(--text); }
+  .auth-error, .auth-success { border-radius: 8px; padding: 10px; font-size: 13px; margin-bottom: 16px; display: none; }
+  .auth-error { background: rgba(231,76,60,0.1); border: 1px solid rgba(231,76,60,0.3); color: #e74c3c; }
+  .auth-success { background: rgba(46,204,113,0.1); border: 1px solid rgba(46,204,113,0.3); color: #2ecc71; }
+  .back-link { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; margin-bottom: 20px; }
+  
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(13,31,23,0.3); border-top-color: #0d1f17; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .btn-loading-text { display: inline-flex; align-items: center; gap: 8px; }
+
+  /* App Shell */
+  #app-shell { display: none; min-height: 100vh; }
+
+  /* Sidebar */
+  .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 100; }
+  .sidebar-logo { display: flex; align-items: center; gap: 12px; padding: 28px 24px 32px; border-bottom: 1px solid var(--border); }
+  .sidebar-logo .logo-mark { width: 38px; height: 38px; font-size: 18px; }
+  .sidebar-logo .logo-text { font-size: 18px; }
+  nav { flex: 1; padding: 24px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .nav-label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); padding: 0 12px; margin: 8px 0 12px; }
+  .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; cursor: pointer; color: var(--muted); font-size: 14px; font-weight: 500; border: none; background: none; width: 100%; text-align: left; transition: all 0.2s; }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: rgba(201,168,76,0.15); color: var(--gold-light); }
+  .nav-icon { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; background: var(--surface2); }
+  .sidebar-footer { padding: 20px 24px; border-top: 1px solid var(--border); }
+  .user-badge { display: flex; align-items: center; gap: 12px; }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--gold), var(--gold-light)); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #0d1f17; flex-shrink: 0; }
+  .user-info { flex: 1; }
+  .user-name { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+  .user-role { font-size: 11px; color: var(--muted); }
+  .logout-btn { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 18px; padding: 6px; transition: color 0.2s; }
+  .logout-btn:hover { color: var(--text); }
+
+  /* Main Content */
+  .main { margin-left: var(--sidebar-w); padding: 32px 48px; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+  .page-title { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 700; }
+  .badge-domain { background: rgba(46,204,113,0.1); border: 1px solid rgba(46,204,113,0.3); color: var(--green); font-size: 12px; padding: 6px 14px; border-radius: 20px; display: flex; align-items: center; gap: 6px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .welcome-row { background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%); border: 1px solid var(--border); border-radius: 24px; padding: 32px 40px; margin-bottom: 40px; display: flex; justify-content: space-between; align-items: center; }
+  .welcome-text h2 { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+  .welcome-text p { font-size: 14px; color: var(--muted); }
+  .welcome-date { font-size: 13px; color: var(--muted); text-align: right; }
+
+  .section-label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; color: var(--muted); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+
+  .launcher-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 48px; }
+  .launcher-item { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; overflow: hidden; cursor: pointer; text-decoration: none; transition: all 0.3s; }
+  .launcher-item:hover { border-color: var(--gold); transform: translateY(-6px); box-shadow: 0 20px 35px rgba(0,0,0,0.3); }
+  .tool-image { width: 100%; height: 160px; overflow: hidden; }
+  .tool-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+  .launcher-item:hover .tool-image img { transform: scale(1.05); }
+  .tool-content { padding: 24px; text-align: center; }
+  .launcher-name { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+  .tool-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+  .activity-section { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 24px; margin-top: 24px; }
+  .activity-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .activity-header h3 { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; }
+  .activity-list { display: flex; flex-direction: column; gap: 16px; }
+  .activity-item { display: flex; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-icon { width: 40px; height: 40px; background: var(--surface2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .activity-details { flex: 1; }
+  .activity-text { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+  .activity-time { font-size: 11px; color: var(--muted); }
+  .activity-action { font-size: 12px; color: var(--gold); cursor: pointer; }
+
+  .panel-overlay { display: none; position: fixed; inset: 0; z-index: 200; }
+  .panel-overlay.open { display: block; }
+  .panel { position: fixed; top: 0; right: 0; bottom: 0; width: 380px; background: var(--surface); border-left: 1px solid var(--border); transform: translateX(100%); transition: transform 0.3s; z-index: 201; }
+  .panel-overlay.open .panel { transform: translateX(0); }
+  .panel-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; }
+  .panel-header { padding: 28px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .panel-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; }
+  .panel-close { background: none; border: none; color: var(--muted); font-size: 22px; cursor: pointer; }
+  .panel-body { padding: 24px; }
+  .notif-item { display: flex; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--border); }
+  .notif-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); margin-top: 6px; }
+  .notif-msg { font-size: 13px; line-height: 1.5; }
+  .notif-time { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .profile-card { background: var(--bg); border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+  .profile-avatar { width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, var(--gold), var(--gold-light)); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px; color: #0d1f17; }
+  .setting-row { display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .setting-label { font-size: 14px; }
+  .danger-btn { width: 100%; background: rgba(231,76,60,0.1); border: 1px solid rgba(231,76,60,0.3); color: #e74c3c; border-radius: 10px; padding: 12px; font-weight: 600; cursor: pointer; margin-top: 16px; }
+  .toggle { position: relative; width: 44px; height: 24px; }
+  .toggle input { opacity: 0; }
+  .toggle-slider { position: absolute; inset: 0; background: var(--border); border-radius: 24px; cursor: pointer; }
+  .toggle-slider::before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: transform 0.2s; }
+  .toggle input:checked + .toggle-slider { background: var(--gold); }
+  .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+  @media (max-width: 1024px) {
+    .launcher-grid { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .main { margin-left: 0; padding: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-mark">D</div>
+      <div class="logo-text">DoBiz<span>Africa</span></div>
+    </div>
+
+    <div class="auth-tabs" id="auth-tabs">
+      <button class="auth-tab active" id="tab-signin-btn" onclick="switchTab('signin')">Sign In</button>
+      <button class="auth-tab" id="tab-signup-btn" onclick="switchTab('signup')">Create Account</button>
+    </div>
+
+    <div id="auth-error" class="auth-error"></div>
+    <div id="auth-success" class="auth-success"></div>
+
+    <div id="tab-signin">
+      <h1 class="login-title">Welcome back</h1>
+      <p class="login-sub">Sign in to access your business tools</p>
+      <button class="btn-google" id="google-signin-btn" onclick="doGoogleSignIn()">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+        Continue with Google
+      </button>
+      <div class="auth-divider"><span>or sign in with email</span></div>
+      <label>Email address</label>
+      <input type="email" id="signin-email" placeholder="you@dobusiness.africa" />
+      <label>Password</label>
+      <input type="password" id="signin-pass" placeholder="••••••••" />
+      <span class="forgot-link" onclick="switchTab('reset')">Forgot password?</span>
+      <button class="btn-login" id="signin-btn" onclick="doSignIn()">Sign In →</button>
+    </div>
+
+    <div id="tab-signup" style="display:none">
+      <h1 class="login-title">Create account</h1>
+      <p class="login-sub">Join DoBiz Africa to access all tools</p>
+      <button class="btn-google" id="google-signup-btn" onclick="doGoogleSignIn()">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+        Continue with Google
+      </button>
+      <div class="auth-divider"><span>or sign up with email</span></div>
+      <label>Email address</label>
+      <input type="email" id="signup-email" placeholder="you@dobusiness.africa" />
+      <label>Password</label>
+      <input type="password" id="signup-pass" placeholder="Min. 6 characters" />
+      <button class="btn-login" id="signup-btn" onclick="doSignUp()">Create Account →</button>
+    </div>
+
+    <div id="tab-reset" style="display:none">
+      <span class="back-link" onclick="switchTab('signin')">← Back to sign in</span>
+      <h1 class="login-title">Reset password</h1>
+      <p class="login-sub">Enter your email and we'll send you a reset link</p>
+      <label>Email address</label>
+      <input type="email" id="reset-email" placeholder="you@dobusiness.africa" />
+      <button class="btn-login" id="reset-btn" onclick="doResetPassword()">Send Reset Link →</button>
+    </div>
+  </div>
+</div>
+
+<div id="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">D</div>
+      <div class="logo-text">DoBiz<span style="color:var(--gold)">Africa</span></div>
+    </div>
+    <nav>
+      <span class="nav-label">Main</span>
+      <button class="nav-item active" id="home-btn"><span class="nav-icon">🏠</span> Dashboard</button>
+      <button class="nav-item" onclick="openPanel('notifications')"><span class="nav-icon">🔔</span> Notifications</button>
+      <button class="nav-item" onclick="openPanel('settings')"><span class="nav-icon">⚙️</span> Settings</button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-badge">
+        <div class="avatar" id="sidebar-avatar">U</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-name">User</div>
+          <div class="user-role">Business Account</div>
+        </div>
+        <button class="logout-btn" onclick="doLogout()">⏏</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="page-title">Dashboard</div>
+      <div class="badge-domain"><div class="dot"></div> app.dobusiness.africa</div>
+    </div>
+
+    <div class="welcome-row">
+      <div class="welcome-text">
+        <h2>Good <span id="greeting-time">morning</span>, <span id="greeting-name">there</span> 👋</h2>
+        <p>Select a tool below to get started.</p>
+      </div>
+      <div class="welcome-date" id="current-date"></div>
+    </div>
+
+    <div class="section-label">
+      <span>Business Tools</span>
+      <span style="font-size: 11px; color: var(--muted);">Click any tool to open</span>
+    </div>
+
+    <div class="launcher-grid">
+      <a href="/rates/" class="launcher-item">
+        <div class="tool-image">
+          <img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&h=300&fit=crop" alt="Bank Interest Rates">
+        </div>
+        <div class="tool-content">
+          <div class="launcher-name">Bank Interest Rates</div>
+          <div class="tool-desc">Compare lending and savings rates across Botswana banks</div>
+        </div>
+      </a>
+      <a href="/network/" class="launcher-item">
+        <div class="tool-image">
+          <img src="https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=500&h=300&fit=crop" alt="Network Comparison">
+        </div>
+        <div class="tool-content">
+          <div class="launcher-name">Network Comparison</div>
+          <div class="tool-desc">Compare mobile networks, coverage, and data bundles</div>
+        </div>
+      </a>
+      <a href="/insurance/" class="launcher-item">
+        <div class="tool-image">
+          <img src="https://images.unsplash.com/photo-1556742044-3c52d6e88c62?w=500&h=300&fit=crop" alt="Insurance Providers">
+        </div>
+        <div class="tool-content">
+          <div class="launcher-name">Insurance Providers</div>
+          <div class="tool-desc">Browse and compare insurance providers in Botswana</div>
+        </div>
+      </a>
+    </div>
+
+    <div class="activity-section">
+      <div class="activity-header">
+        <h3>Recent Activity</h3>
+        <span style="font-size: 11px; color: var(--muted);">Last 7 days</span>
+      </div>
+      <div class="activity-list">
+        <div class="activity-item">
+          <div class="activity-icon">🏦</div>
+          <div class="activity-details">
+            <div class="activity-text">Bank rates updated</div>
+            <div class="activity-time">2 hours ago</div>
+          </div>
+          <div class="activity-action" onclick="window.location.href='/rates/'">View →</div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-icon">📶</div>
+          <div class="activity-details">
+            <div class="activity-text">New network data added</div>
+            <div class="activity-time">Yesterday</div>
+          </div>
+          <div class="activity-action" onclick="window.location.href='/network/'">View →</div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-icon">🛡️</div>
+          <div class="activity-details">
+            <div class="activity-text">Insurance provider comparison updated</div>
+            <div class="activity-time">3 days ago</div>
+          </div>
+          <div class="activity-action" onclick="window.location.href='/insurance/'">View →</div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="panel-overlay" id="panel-notifications">
+  <div class="panel-backdrop" onclick="closePanel('notifications')"></div>
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Notifications</div>
+      <button class="panel-close" onclick="closePanel('notifications')">✕</button>
+    </div>
+    <div class="panel-body">
+      <div class="notif-item"><div class="notif-dot"></div><div class="notif-content"><div class="notif-msg">Welcome to DoBiz Africa. Your account is set up and your tools are ready to use.</div><div class="notif-time">Just now</div></div></div>
+      <div class="notif-item"><div class="notif-dot"></div><div class="notif-content"><div class="notif-msg">Bank Interest Rates tool has been updated with the latest data.</div><div class="notif-time">Today</div></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="panel-overlay" id="panel-settings">
+  <div class="panel-backdrop" onclick="closePanel('settings')"></div>
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Settings</div>
+      <button class="panel-close" onclick="closePanel('settings')">✕</button>
+    </div>
+    <div class="panel-body">
+      <div class="profile-card">
+        <div class="profile-avatar" id="settings-avatar">U</div>
+        <div class="profile-info">
+          <div class="profile-name" id="settings-name">User</div>
+          <div class="profile-email" id="settings-email">user@example.com</div>
+        </div>
+      </div>
+      <div class="setting-row"><div class="setting-label">Email notifications</div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+      <div class="setting-row"><div class="setting-label">Open tools in new tab</div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+      <button class="danger-btn" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Supabase Configuration
+  const SUPABASE_URL = 'https://ribrhjtyiovcjofwcewc.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJpYnJoanR5aW92Y2pvZndjZXdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5OTkyNjIsImV4cCI6MjA4ODU3NTI2Mn0.IyKQs_ZS-FBVsed5ET62qyY04tLoAhD3wCXE_HTxKKc';
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: { autoRefreshToken: true, persistSession: true, detectSessionInUrl: true, flowType: 'pkce' }
+  });
+
+  let currentUser = null;
+
+  // Helper Functions
+  function setButtonLoading(buttonId, isLoading, loadingText) {
+    const btn = document.getElementById(buttonId);
+    if (!btn) return;
+    if (isLoading) {
+      btn.disabled = true;
+      btn.style.cursor = 'wait';
+      const originalText = btn.innerHTML;
+      btn.setAttribute('data-original-text', originalText);
+      btn.innerHTML = `<span class="btn-loading-text"><span class="spinner"></span>${loadingText}</span>`;
+    } else {
+      btn.disabled = false;
+      btn.style.cursor = 'pointer';
+      const originalText = btn.getAttribute('data-original-text');
+      if (originalText) {
+        btn.innerHTML = originalText;
+      }
+    }
+  }
+
+  function setAuthTabsEnabled(enabled) {
+    const tabs = ['tab-signin-btn', 'tab-signup-btn'];
+    tabs.forEach(id => {
+      const tab = document.getElementById(id);
+      if (tab) tab.disabled = !enabled;
+    });
+  }
+
+  function setInputsEnabled(tabId, enabled) {
+    const tab = document.getElementById(tabId);
+    if (!tab) return;
+    const inputs = tab.querySelectorAll('input');
+    inputs.forEach(input => {
+      if (enabled) input.disabled = false;
+      else input.disabled = true;
+    });
+  }
+
+  function showError(msg) { 
+    const el = document.getElementById('auth-error'); 
+    el.textContent = msg; 
+    el.style.display = 'block'; 
+    document.getElementById('auth-success').style.display = 'none'; 
+    setTimeout(() => { el.style.display = 'none'; }, 5000);
+  }
+  
+  function showSuccess(msg) { 
+    const el = document.getElementById('auth-success'); 
+    el.textContent = msg; 
+    el.style.display = 'block'; 
+    document.getElementById('auth-error').style.display = 'none'; 
+    setTimeout(() => { el.style.display = 'none'; }, 5000);
+  }
+  
+  function hideMessages() { 
+    document.getElementById('auth-error').style.display = 'none'; 
+    document.getElementById('auth-success').style.display = 'none'; 
+  }
+
+  function switchTab(tab) {
+    document.getElementById('tab-signin').style.display = tab === 'signin' ? 'block' : 'none';
+    document.getElementById('tab-signup').style.display = tab === 'signup' ? 'block' : 'none';
+    document.getElementById('tab-reset').style.display = tab === 'reset' ? 'block' : 'none';
+    const tabs = document.getElementById('auth-tabs');
+    if (tabs) tabs.style.display = tab === 'reset' ? 'none' : 'flex';
+    document.querySelectorAll('.auth-tab').forEach((t, i) => {
+      t.classList.toggle('active', (i === 0 && tab === 'signin') || (i === 1 && tab === 'signup'));
+    });
+    hideMessages();
+  }
+
+  async function doSignIn() {
+    const email = document.getElementById('signin-email').value.trim();
+    const password = document.getElementById('signin-pass').value;
+    if (!email || !password) return showError('Please enter your email and password.');
+    
+    setButtonLoading('signin-btn', true, 'Signing in...');
+    setAuthTabsEnabled(false);
+    setInputsEnabled('tab-signin', false);
+    hideMessages();
+    
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    
+    setButtonLoading('signin-btn', false, '');
+    setAuthTabsEnabled(true);
+    setInputsEnabled('tab-signin', true);
+    
+    if (error) return showError(error.message);
+    loadApp(data.user);
+  }
+
+  async function doSignUp() {
+    const email = document.getElementById('signup-email').value.trim();
+    const password = document.getElementById('signup-pass').value;
+    if (!email || !password) return showError('Please fill in all fields.');
+    if (password.length < 6) return showError('Password must be at least 6 characters.');
+    
+    setButtonLoading('signup-btn', true, 'Creating account...');
+    setAuthTabsEnabled(false);
+    setInputsEnabled('tab-signup', false);
+    hideMessages();
+    
+    const { data, error } = await sb.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: window.location.origin }
+    });
+    
+    setButtonLoading('signup-btn', false, '');
+    setAuthTabsEnabled(true);
+    setInputsEnabled('tab-signup', true);
+    
+    if (error) return showError(error.message);
+    
+    if (data.user && data.user.identities && data.user.identities.length === 0) {
+      return showError('An account with this email already exists. Please sign in instead.');
+    }
+    
+    showSuccess('✅ Account created! A confirmation link has been sent to your email. Please check your inbox and click the link to verify your account before signing in.');
+    switchTab('signin');
+  }
+
+  async function doGoogleSignIn() {
+    hideMessages();
+    setButtonLoading('google-signin-btn', true, 'Connecting to Google...');
+    setButtonLoading('google-signup-btn', true, 'Connecting to Google...');
+    setAuthTabsEnabled(false);
+    
+    const { error } = await sb.auth.signInWithOAuth({ 
+      provider: 'google', 
+      options: { redirectTo: window.location.origin } 
+    });
+    
+    setButtonLoading('google-signin-btn', false, '');
+    setButtonLoading('google-signup-btn', false, '');
+    setAuthTabsEnabled(true);
+    
+    if (error) showError('Google sign in failed: ' + error.message);
+  }
+
+  async function doResetPassword() {
+    const email = document.getElementById('reset-email').value.trim();
+    if (!email) return showError('Please enter your email address.');
+    
+    setButtonLoading('reset-btn', true, 'Sending...');
+    hideMessages();
+    
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/update-password.html' });
+    
+    setButtonLoading('reset-btn', false, '');
+    
+    if (error) return showError(error.message);
+    showSuccess('✅ Reset link sent! Check your email and click the link to set a new password.');
+  }
+
+  async function doLogout() {
+    await sb.auth.signOut();
+    closePanel('notifications');
+    closePanel('settings');
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app-shell').style.display = 'none';
+    switchTab('signin');
+  }
+
+  function loadApp(user) {
+    currentUser = user;
+    const email = user.email || '';
+    const name = user.user_metadata?.full_name || email.split('@')[0];
+    const initial = name ? name[0].toUpperCase() : 'U';
+    document.getElementById('sidebar-avatar').textContent = initial;
+    document.getElementById('sidebar-name').textContent = name;
+    document.getElementById('greeting-name').textContent = name;
+    document.getElementById('settings-avatar').textContent = initial;
+    document.getElementById('settings-name').textContent = name;
+    document.getElementById('settings-email').textContent = email;
+    const hour = new Date().getHours();
+    document.getElementById('greeting-time').textContent = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
+    const now = new Date();
+    document.getElementById('current-date').innerHTML = now.toLocaleDateString('en-GB', { weekday: 'long' }) + '<br>' + now.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-shell').style.display = 'block';
+  }
+
+  function openPanel(name) { document.getElementById('panel-' + name).classList.add('open'); }
+  function closePanel(name) { document.getElementById('panel-' + name).classList.remove('open'); }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { closePanel('notifications'); closePanel('settings'); } });
+
+  // Check if user is already logged in on page load
+  (async function init() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+      loadApp(session.user);
+    }
+  })();
+</script>
+</body>
+</html>

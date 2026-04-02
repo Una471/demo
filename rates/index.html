@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bank Interest Rates | DoBiz Africa</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ========== RATES TOOL STYLES ========== */
+:root {
+  --navy: #0C2340;
+  --navy-mid: #1A3A5C;
+  --gold: #C9A84C;
+  --gold-light: #E8C96A;
+  --green: #059669;
+  --red: #DC2626;
+  --orange: #D97706;
+  --blue: #2563EB;
+  --surface: #F8F9FC;
+  --border: #E5E8EF;
+  --text: #1A2535;
+  --muted: #6B7280;
+  --white: #FFFFFF;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text);line-height:1.6}
+
+/* Navigation */
+.nav-top {
+  background: var(--navy);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.3);
+}
+.nav-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  background: var(--gold);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  color: var(--navy);
+  font-size: 1.1em;
+}
+.logo-text {
+  font-weight: 700;
+  color: white;
+  font-size: 1.1em;
+}
+.logo-text span { color: var(--gold); }
+.nav-links {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.nav-links a {
+  padding: 8px 14px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: rgba(255,255,255,0.7);
+  font-size: 0.875em;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.nav-links a:hover,
+.nav-links a.active {
+  color: white;
+  background: rgba(255,255,255,0.1);
+}
+.nav-links a.active {
+  color: var(--gold-light);
+}
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  background: var(--gold);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: var(--navy);
+}
+.user-name {
+  color: white;
+  font-size: 0.875em;
+}
+.logout-btn {
+  background: rgba(255,255,255,0.15);
+  border: none;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.75em;
+}
+.logout-btn:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+/* Page Header */
+.page-header {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
+  padding: 48px 24px;
+}
+.page-header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.page-header h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 2.2em;
+  color: white;
+  margin-bottom: 8px;
+}
+.page-header p {
+  color: rgba(255,255,255,0.6);
+  font-size: 1em;
+  max-width: 600px;
+}
+
+/* Main Content */
+.main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+/* Product Tabs */
+.product-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  background: white;
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+.product-tab {
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.83em;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  color: var(--muted);
+  font-family: 'DM Sans', sans-serif;
+}
+.product-tab:hover {
+  background: #EFF6FF;
+  color: var(--blue);
+}
+.product-tab.active {
+  background: var(--blue);
+  color: white;
+}
+
+/* Table */
+.table-wrap {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  overflow-x: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px;
+}
+thead th {
+  background: var(--navy);
+  color: white;
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 0.75em;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+tbody tr:hover {
+  background: #FAFBFF;
+}
+td {
+  padding: 14px 16px;
+  font-size: 0.875em;
+}
+.bank-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.bank-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.75em;
+  color: white;
+  flex-shrink: 0;
+}
+.bank-name-link {
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+}
+.bank-name-link:hover {
+  color: var(--navy);
+  text-decoration: underline;
+}
+.rate-best {
+  font-weight: 700;
+  color: var(--green);
+}
+.badge-best {
+  background: #ECFDF5;
+  color: var(--green);
+  font-size: 0.7em;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 100px;
+  margin-left: 6px;
+}
+.rate-na {
+  color: #D1D5DB;
+  font-style: italic;
+}
+.updated {
+  font-size: 0.72em;
+  color: var(--muted);
+}
+.loading-state {
+  text-align: center;
+  padding: 60px 24px;
+  color: var(--muted);
+}
+.spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border);
+  border-top-color: var(--navy);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.disclaimer {
+  margin-top: 32px;
+  padding: 16px 20px;
+  background: white;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  font-size: 0.78em;
+  color: var(--muted);
+}
+
+/* Loading Overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.loading-spinner {
+  background: white;
+  padding: 20px 30px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+</style>
+</head>
+<body>
+
+<div id="loadingOverlay" class="loading-overlay" style="display: none;">
+  <div class="loading-spinner">
+    <div class="spinner"></div>
+    <span>Loading...</span>
+  </div>
+</div>
+
+<nav class="nav-top">
+  <div class="nav-inner">
+    <a href="/" class="logo">
+      <div class="logo-icon">D</div>
+      <div class="logo-text">DoBiz<span>Africa</span></div>
+    </a>
+    <div class="nav-links">
+      <a href="/">Dashboard</a>
+      <a href="/insurance/" class="active">Insurance</a>
+      <a href="/rates/" class="active">Rates</a>
+      <a href="/network/">Network</a>
+    </div>
+    <div class="user-info">
+      <div class="user-avatar" id="userAvatar">U</div>
+      <span class="user-name" id="userName">User</span>
+      <button class="logout-btn" onclick="handleLogout()">Logout</button>
+    </div>
+  </div>
+</nav>
+
+<div class="page-header">
+  <div class="page-header-inner">
+    <h1>Bank Interest Rates</h1>
+    <p>Compare lending and savings rates across all Botswana banks. Updated monthly from official bank schedules.</p>
+  </div>
+</div>
+
+<div class="main">
+  <div class="product-tabs">
+    <button class="product-tab active" onclick="setProduct('savings', this)">🏦 Savings</button>
+    <button class="product-tab" onclick="setProduct('fixed', this)">🔒 Fixed Deposits</button>
+    <button class="product-tab" onclick="setProduct('loans', this)">💰 Loans</button>
+  </div>
+
+  <div id="tableContainer">
+    <div class="table-wrap">
+      <table>
+        <thead id="tableHead"></thead>
+        <tbody id="tableBody">
+          <tr><td colspan="10"><div class="loading-state"><div class="spinner"></div>Loading rates...</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    ⚠️ Rates shown are indicative from official bank schedules. Always confirm directly with your bank before making financial decisions. Click bank names to visit their official websites.
+  </div>
+</div>
+
+<script>
+// ========== SUPABASE CONFIGURATION ==========
+const SUPABASE_URL = 'https://ribrhjtyiovcjofwcewc.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJpYnJoanR5aW92Y2pvZndjZXdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5OTkyNjIsImV4cCI6MjA4ODU3NTI2Mn0.IyKQs_ZS-FBVsed5ET62qyY04tLoAhD3wCXE_HTxKKc';
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { autoRefreshToken: true, persistSession: true }
+});
+
+// ========== SESSION CHECK (CRITICAL) ==========
+// This ensures user is logged in before seeing the tool
+let currentUser = null;
+
+async function checkSession() {
+  const loadingOverlay = document.getElementById('loadingOverlay');
+  loadingOverlay.style.display = 'flex';
+  
+  const { data: { session }, error } = await sb.auth.getSession();
+  
+  if (error || !session) {
+    // Not logged in — redirect to dashboard to sign in
+    window.location.href = 'https://app.dobusiness.africa';
+    return false;
+  }
+  
+  currentUser = session.user;
+  
+  // Update UI with user info
+  const name = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
+  const initial = name.charAt(0).toUpperCase();
+  document.getElementById('userName').textContent = name;
+  document.getElementById('userAvatar').textContent = initial;
+  
+  loadingOverlay.style.display = 'none';
+  return true;
+}
+
+async function handleLogout() {
+  await sb.auth.signOut();
+  window.location.href = 'https://app.dobusiness.africa';
+}
+
+// ========== RATES TOOL CODE ==========
+const AIRTABLE_API_KEY = 'patBhLP5wtc8YTY0A.30baf2ceb238a472b12ac9b5db2d366ad0f68a1f6c9363ec15ad96357339053a';
+const AIRTABLE_BASE_ID = 'appHKaTJz3Bx550eb';
+const AIRTABLE_TABLE = 'Bank Interest Rates';
+
+const BANK_COLORS = ['#0C2340','#1A3A5C','#C9A84C','#059669','#2563EB','#D97706','#7C3AED','#DC2626','#0891B2','#16A34A','#EA580C'];
+
+let allBanks = [];
+let currentProduct = 'savings';
+
+function bankColor(name) {
+  let h = 0;
+  for (const c of name) h = (h * 31 + c.charCodeAt(0)) & 0xFFFF;
+  return BANK_COLORS[h % BANK_COLORS.length];
+}
+
+function bankInitials(name) {
+  return (name || '??').split(' ').filter(w => /^[A-Z]/.test(w)).map(w => w[0]).join('').substring(0, 3) || name.substring(0, 2).toUpperCase();
+}
+
+function fmt(v) {
+  const n = parseFloat(v);
+  return isNaN(n) ? null : n.toFixed(2) + '%';
+}
+
+function setProduct(product, el) {
+  currentProduct = product;
+  document.querySelectorAll('.product-tab').forEach(tab => tab.classList.remove('active'));
+  el.classList.add('active');
+  renderTable();
+}
+
+function renderTable() {
+  const thead = document.getElementById('tableHead');
+  const tbody = document.getElementById('tableBody');
+  
+  if (!allBanks.length) {
+    thead.innerHTML = '';
+    tbody.innerHTML = `<tr><td colspan="10"><div class="loading-state">No bank data loaded yet. Use admin page to upload.</div></td></tr>`;
+    return;
+  }
+  
+  if (currentProduct === 'savings') {
+    thead.innerHTML = `<tr><th>Bank</th><th>Savings Rate</th><th>Call Account</th><th>SAYE</th><th>Updated</th></tr>`;
+    
+    const bestSav = Math.max(...allBanks.map(b => parseFloat(b['Savings Max'])).filter(v => !isNaN(v)));
+    const bestCall = Math.max(...allBanks.map(b => parseFloat(b['Call Account Max'])).filter(v => !isNaN(v)));
+    
+    let html = '';
+    allBanks.forEach(b => {
+      const name = b['Bank Name'];
+      const website = b['Website'] || '#';
+      const sav = fmt(b['Savings Max']);
+      const call = fmt(b['Call Account Max']);
+      const saye = fmt(b['SAYE Max']);
+      const isBestSav = parseFloat(b['Savings Max']) === bestSav && !isNaN(bestSav);
+      const isBestCall = parseFloat(b['Call Account Max']) === bestCall && !isNaN(bestCall);
+      
+      html += `<tr>
+        <td><div class="bank-cell"><div class="bank-avatar" style="background:${bankColor(name)}">${bankInitials(name)}</div><div><a href="${website}" target="_blank" class="bank-name-link">${name}</a></div></div></td>
+        <td class="${isBestSav ? 'rate-best' : ''}">${sav || '<span class="rate-na">—</span>'}${isBestSav ? '<span class="badge-best">BEST</span>' : ''}</td>
+        <td class="${isBestCall ? 'rate-best' : ''}">${call || '<span class="rate-na">—</span>'}${isBestCall ? '<span class="badge-best">BEST</span>' : ''}</td>
+        <td>${saye || '<span class="rate-na">BSB only</span>'}</td>
+        <td class="updated">${b['Data Month'] || '—'}</td>
+      </tr>`;
+    });
+    tbody.innerHTML = html;
+    
+  } else if (currentProduct === 'fixed') {
+    thead.innerHTML = `<tr><th>Bank</th><th>3 Months</th><th>6 Months</th><th>12 Months</th><th>24 Months</th><th>Over 24M</th><th>Updated</th></tr>`;
+    
+    let html = '';
+    allBanks.forEach(b => {
+      const name = b['Bank Name'];
+      const website = b['Website'] || '#';
+      const fd3 = fmt(b['FD 3M Nominal Max']);
+      const fd6 = fmt(b['FD 6M Nominal Max']);
+      const fd12 = fmt(b['FD 12M Nominal Max']);
+      const fd24 = fmt(b['FD 24M Nominal Max']);
+      const fdOver = fmt(b['FD Over24M Nominal Max']);
+      
+      html += `<tr>
+        <td><div class="bank-cell"><div class="bank-avatar" style="background:${bankColor(name)}">${bankInitials(name)}</div><div><a href="${website}" target="_blank" class="bank-name-link">${name}</a></div></div></td>
+        <td>${fd3 || '<span class="rate-na">—</span>'}</td>
+        <td>${fd6 || '<span class="rate-na">—</span>'}</td>
+        <td>${fd12 || '<span class="rate-na">—</span>'}</td>
+        <td>${fd24 || '<span class="rate-na">—</span>'}</td>
+        <td>${fdOver || '<span class="rate-na">—</span>'}</td>
+        <td class="updated">${b['Data Month'] || '—'}</td>
+      </tr>`;
+    });
+    tbody.innerHTML = html;
+    
+  } else if (currentProduct === 'loans') {
+    thead.innerHTML = `<tr><th>Bank</th><th>Prime Lending Rate</th><th>Mortgage</th><th>Personal Loan</th><th>Car Loan</th><th>Credit Card</th><th>Updated</th></tr>`;
+    
+    let html = '';
+    allBanks.forEach(b => {
+      const name = b['Bank Name'];
+      const website = b['Website'] || '#';
+      const plr = fmt(b['Prime Lending Rate']);
+      const mortgage = b['Mortgage Rate Min'] && b['Mortgage Rate Max'] ? `${fmt(b['Mortgage Rate Min'])} - ${fmt(b['Mortgage Rate Max'])}` : '<span class="rate-na">—</span>';
+      const personal = b['Personal Loan Min'] && b['Personal Loan Max'] ? `${fmt(b['Personal Loan Min'])} - ${fmt(b['Personal Loan Max'])}` : '<span class="rate-na">—</span>';
+      const car = b['Car Loan Min'] && b['Car Loan Max'] ? `${fmt(b['Car Loan Min'])} - ${fmt(b['Car Loan Max'])}` : '<span class="rate-na">—</span>';
+      const credit = b['Credit Card Rate Min'] && b['Credit Card Rate Max'] ? `${fmt(b['Credit Card Rate Min'])} - ${fmt(b['Credit Card Rate Max'])}` : '<span class="rate-na">—</span>';
+      
+      html += `<tr>
+        <td><div class="bank-cell"><div class="bank-avatar" style="background:${bankColor(name)}">${bankInitials(name)}</div><div><a href="${website}" target="_blank" class="bank-name-link">${name}</a></div></div></td>
+        <td><strong>${plr || '<span class="rate-na">—</span>'}</strong></td>
+        <td>${mortgage}</td>
+        <td>${personal}</td>
+        <td>${car}</td>
+        <td>${credit}</td>
+        <td class="updated">${b['Data Month'] || '—'}</td>
+      </tr>`;
+    });
+    tbody.innerHTML = html;
+  }
+}
+
+async function loadRates() {
+  try {
+    const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE)}?sort[0][field]=Bank Name`;
+    const res = await fetch(url, { headers: { 'Authorization': `Bearer ${AIRTABLE_API_KEY}` } });
+    const json = await res.json();
+    allBanks = (json.records || []).map(r => r.fields).filter(f => f['Bank Name']);
+    renderTable();
+  } catch (e) {
+    console.error('Error loading rates:', e);
+    allBanks = [];
+    renderTable();
+  }
+}
+
+// ========== INITIALIZATION ==========
+(async function init() {
+  const loggedIn = await checkSession();
+  if (loggedIn) {
+    await loadRates();
+  }
+})();
+</script>
+</body>
+</html>
